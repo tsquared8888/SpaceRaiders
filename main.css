@@ -1,0 +1,7 @@
+#game-over-text {
+    position: absolute;
+    top: 100px;
+    left: 90px;
+    z-index: 100;
+    text-align: center;
+}
