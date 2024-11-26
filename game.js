@@ -7,15 +7,21 @@ const GAME_HEIGHT = 256;
 const TURRET_WIDTH = 16;
 const TURRET_HEIGHT = 16;
 const TURRET_SPEED = 20;
+const ALIEN_WIDTH = 16;
+const ALIEN_HEIGHT = 16;
+const ALIEN_SPACING = 8;
+const ALIEN_ROWS = 8;
+const ALIEN_COLS = 5;
 const LASER_WIDTH = 1;
 const LASER_HEIGHT = 4;
-const LASER_SPEED = 25;
+const LASER_SPEED = 15;
 var gameStart = false;
 var lastTime = 0;
 var gameOver = false;
 var score = 0;
 var turretCollided = false;
 var lasers = [];
+var aliens = [];
 
 /* Game objects */
 var turret = {
@@ -29,6 +35,8 @@ var turret = {
     movR: 0
 };
 
+/************* CREATION FUNCTIONS *************/
+
 function laser(x, y, w, h, y_vel, group) {
     this.x = x;
     this.y = y;
@@ -36,6 +44,24 @@ function laser(x, y, w, h, y_vel, group) {
     this.h = h;
     this.y_vel = y_vel;
     this.group = group; // player or enemy
+}
+
+function alien(x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+}
+
+aliens = new Array(ALIEN_ROWS);
+for (let i = 0; i < ALIEN_ROWS; i++) {
+    aliens[i] = new Array(ALIEN_COLS);
+}
+
+for (let i = 0; i < ALIEN_ROWS; i++) {
+    for (let j = 0; j < ALIEN_COLS; j++) {
+        aliens[i][j] = new alien(i*ALIEN_WIDTH+i*ALIEN_SPACING+ALIEN_SPACING, j*ALIEN_HEIGHT+j*ALIEN_SPACING+ALIEN_SPACING, ALIEN_WIDTH, ALIEN_HEIGHT);
+    }
 }
 
 
@@ -65,8 +91,8 @@ function moveTurret(deltaTime) {
     turret.x_vel = 0;
     turret.x_vel = turret.movR + turret.movL;
     // Add bounds to x movement
-    if (turret.x >= GAME_WIDTH - turret.w/2 && turret.x_vel > 0 ||
-        turret.x <= -turret.w/2 && turret.x_vel < 0) 
+    if (turret.x >= GAME_WIDTH - turret.w && turret.x_vel > 0 ||
+        turret.x <= 0 && turret.x_vel < 0) 
     {
         turret.x = turret.x;
     } else {
@@ -80,9 +106,30 @@ function moveTurret(deltaTime) {
 
 function fire(group) {
     if (group == "turret") {
-        var lsr_obj = new laser(turret.x + TURRET_WIDTH/2, turret.y, 1, 4, -1, group);
+        var lsr_obj = new laser(turret.x + TURRET_WIDTH/2, turret.y, 1, 4, -LASER_SPEED, group);
         lasers.push(lsr_obj);
     }
+}
+
+function moveLasers(deltaTime) {
+    for (i = 0; i < lasers.length; i++) {
+        var lsr = lasers[i];
+        lsr.y += lsr.y_vel * deltaTime;
+    }
+}
+
+function checkCollisions() {
+    var count = 0;
+    for (let i = 0; i < ALIEN_ROWS; i++) {
+        for (let j = 0; j < ALIEN_COLS; j++) {
+            for (let k = 0; k < lasers.length; k++) {
+                if (aliens[i][j] != 0 && collisionCheck(aliens[i][j], lasers[k])) {
+                    aliens[i][j] = 0;
+                }
+            }
+        }
+    }
+    console.log(count);
 }
 
 /************* MAIN FUNCTIONS *************/
@@ -121,6 +168,8 @@ function input() {
 
 function update(deltaTime) {
     moveTurret(deltaTime);
+    moveLasers(deltaTime);
+    checkCollisions();
 }
 
 function draw() {
@@ -128,11 +177,16 @@ function draw() {
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     ctx.fillStyle = 'white';
     ctx.drawImage(turret.sprite, turret.x, turret.y);
-    console.log(lasers);
-    for (i = 0; i < lasers.length; i++) {
+    for (let i = 0; i < lasers.length; i++) {
         var lsr = lasers[i];
-        lsr.y += lsr.y_vel;
         ctx.fillRect(lsr.x, lsr.y, lsr.w, lsr.h);
+    }
+
+    for (let i = 0; i < aliens.length; i++) {
+        for (let j = 0; j < aliens[i].length; j++) {
+            let alien = aliens[i][j];
+            ctx.fillRect(alien.x, alien.y, alien.w, alien.h);
+        }
     }
 
     if (gameOver) {
