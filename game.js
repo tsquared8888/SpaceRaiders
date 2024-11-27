@@ -12,8 +12,8 @@ const ALIEN_HEIGHT = 16;
 const ALIEN_SPACING = 8;
 const ALIEN_ROWS = 8;
 const ALIEN_COLS = 5;
-const LASER_WIDTH = 1;
-const LASER_HEIGHT = 4;
+const LASER_WIDTH = 2;
+const LASER_HEIGHT = 8;
 const LASER_SPEED = 15;
 var gameStart = false;
 var lastTime = 0;
@@ -22,7 +22,7 @@ var score = 0;
 var turretCollided = false;
 var lasers = [];
 var aliens = [];
-var shotReady = false;
+var shotReady = true;
 
 /* Game objects */
 var turret = {
@@ -77,10 +77,10 @@ function resetGame() {
 
 function collisionCheck(ob1, ob2) {
     // If the equations below are > 0, we know the second object (after minus) is between the first object's position and width
-    var x1 = ob1.x + ob1.w - ob2.x;
-    var x2 = ob2.x + ob2.w - ob1.x;
-    var y1 = ob1.y + ob1.h - ob2.y;
-    var y2 = ob2.y + ob2.h - ob1.y;
+    let x1 = ob1.x + ob1.w - ob2.x;
+    let x2 = ob2.x + ob2.w - ob1.x;
+    let y1 = ob1.y + ob1.h - ob2.y;
+    let y2 = ob2.y + ob2.h - ob1.y;
     if (((x1 > 0 && x1 <= ob1.w) || (x2 > 0 && x2 <= ob2.w))
         && ((y1 > 0 && y1 <= ob1.h)|| (y2 > 0 && y2 <= ob2.h))) 
     {
@@ -107,16 +107,18 @@ function moveTurret(deltaTime) {
 
 function fire(group) {
     if (group == "turret") {
-        var lsr_obj = new laser(turret.x + TURRET_WIDTH/2, turret.y, 1, 4, -LASER_SPEED, group);
-        lasers.push(lsr_obj);
+        let laser_obj = new laser(turret.x + TURRET_WIDTH/2, turret.y, LASER_WIDTH, LASER_HEIGHT, -LASER_SPEED, group);
+        lasers.push(laser_obj);
+        console.log(lasers[0]);
     }
 }
 
 function moveLasers(deltaTime) {
-    var i = 0;
+    let i = 0;
     while (i < lasers.length) {
         let laser = lasers[i];
         laser.y += laser.y_vel * deltaTime;
+        // remove laser if off screen
         if (laser.y > GAME_HEIGHT || laser.y < -laser.h) {
             lasers.splice(i, 1);
         } else {
@@ -125,19 +127,37 @@ function moveLasers(deltaTime) {
     }
 }
 
+/* 
+    Explanation:
+
+    I need to break out of the for loops if a collision happened or I may get an error
+    for out of bounds in the lasers array since I remove an element after colliding. I could
+    have the while loop inside the fors to make it easier, but that means the for loops
+    get executed every frame which seems wasteful.
+*/
 function checkCollisions() {
-    var k = 0;
-    for (let i = 0; i < ALIEN_ROWS; i++) {
-        for (let j = 0; j < ALIEN_COLS; j++) {
-            while (k < lasers.length) {
-                console.log(lasers);
+    let k = 0;
+    while (k < lasers.length) {
+        let collided = false;
+        for (let i = 0; i < ALIEN_ROWS; i++) {
+            if (collided) {
+                break;
+            }
+            for (let j = 0; j < ALIEN_COLS; j++) {
+                if (collided) {
+                    break;
+                }
                 if (aliens[i][j] != 0 && collisionCheck(aliens[i][j], lasers[k])) {
                     aliens[i][j] = 0;
                     lasers.splice(k, 1);
-                } else {
-                    k++;
+                    collided = true;
                 }
             }
+        }
+        if (collided) {
+            collided = false;
+        } else {
+            k++;
         }
     }
 }
@@ -192,7 +212,7 @@ function draw() {
     ctx.fillStyle = 'white';
     ctx.drawImage(turret.sprite, turret.x, turret.y);
     for (let i = 0; i < lasers.length; i++) {
-        var lsr = lasers[i];
+        let lsr = lasers[i];
         ctx.fillRect(lsr.x, lsr.y, lsr.w, lsr.h);
     }
 
