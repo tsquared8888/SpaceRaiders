@@ -22,6 +22,7 @@ var score = 0;
 var turretCollided = false;
 var lasers = [];
 var aliens = [];
+var shotReady = false;
 
 /* Game objects */
 var turret = {
@@ -112,24 +113,33 @@ function fire(group) {
 }
 
 function moveLasers(deltaTime) {
-    for (i = 0; i < lasers.length; i++) {
-        var lsr = lasers[i];
-        lsr.y += lsr.y_vel * deltaTime;
+    var i = 0;
+    while (i < lasers.length) {
+        let laser = lasers[i];
+        laser.y += laser.y_vel * deltaTime;
+        if (laser.y > GAME_HEIGHT || laser.y < -laser.h) {
+            lasers.splice(i, 1);
+        } else {
+            i++;
+        }
     }
 }
 
 function checkCollisions() {
-    var count = 0;
+    var k = 0;
     for (let i = 0; i < ALIEN_ROWS; i++) {
         for (let j = 0; j < ALIEN_COLS; j++) {
-            for (let k = 0; k < lasers.length; k++) {
+            while (k < lasers.length) {
+                console.log(lasers);
                 if (aliens[i][j] != 0 && collisionCheck(aliens[i][j], lasers[k])) {
                     aliens[i][j] = 0;
+                    lasers.splice(k, 1);
+                } else {
+                    k++;
                 }
             }
         }
     }
-    console.log(count);
 }
 
 /************* MAIN FUNCTIONS *************/
@@ -143,8 +153,9 @@ function input() {
             if (event.key == 'ArrowLeft') {
                 turret.movL = -TURRET_SPEED;
             }
-            if (event.key == ' ') {
+            if (event.key == ' ' && shotReady) {
                 fire("turret");
+                shotReady = false;
             }
             
         } else {
@@ -153,7 +164,7 @@ function input() {
             }
         }
     })
-
+    
     document.addEventListener("keyup", (event)=> {
         if (!gameOver) {
             if (event.key == 'ArrowRight') {
@@ -161,6 +172,9 @@ function input() {
             }
             if (event.key == 'ArrowLeft') {
                 turret.movL = 0;
+            }
+            if (event.key == ' ') {
+                shotReady = true;
             }
         }
     })
