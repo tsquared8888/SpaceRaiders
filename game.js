@@ -181,7 +181,7 @@ function checkEdges() {
     } else if (alien_direction == -1) { // Else we move left to right to find left edge
         for (let i = ALIEN_ROWS-1; i > 0; i--) {
             for (let j = ALIEN_COLS-1; j > 0; j--) {
-                if (aliens[i][j] != 0 && aliens[row_index][col_index].x <= ALIEN_SPACING + 8 * ALIEN_WIDTH) {
+                if (aliens[i][j] != 0 && aliens[i][j].x <= ALIEN_SPACING + 2 * ALIEN_WIDTH) {
                     alien_move_down = true;
                 }
             }
