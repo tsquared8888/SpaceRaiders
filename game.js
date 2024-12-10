@@ -133,6 +133,8 @@ function moveLasers(deltaTime) {
     }
 }
 
+// We can't use a for loop since we want to move one alien at a time.
+// Also why we use a unique row and column index
 function moveAliens(deltaTime) {
     timer += deltaTime;
     while (timer > timerMax) {
@@ -148,21 +150,42 @@ function moveAliens(deltaTime) {
         }
 
         // Index handling
-        col_index -= 1;
-        if (col_index == -1) {
-            row_index -= 1;
-            if (row_index == -1) {
-                row_index = aliens.length-1;
-                col_index = aliens[row_index].length-1;
-                // move aliens down
-                if (alien_move_down) {
-                    alien_move_down = false;
-                    alien_direction *= -1;
-                } else {
-                    checkEdges();
+        if (alien_direction == 1) {
+            col_index -= 1; 
+            if (col_index == -1) {
+                row_index -= 1;
+                if (row_index == -1) {
+                    row_index = aliens.length-1;
+                    col_index = aliens[row_index].length-1;
+                    // move aliens down
+                    if (alien_move_down) {
+                        alien_move_down = false;
+                        alien_direction *= -1;
+                        row_index = 0;
+                    } else {
+                        checkEdges();
+                    }
                 }
+                col_index = aliens[row_index].length-1;
             }
-            col_index = aliens[row_index].length-1;
+        } else {
+            col_index -= 1; 
+            if (col_index == -1) {
+                row_index += 1;
+                if (row_index == aliens.length) {
+                    row_index = 0;
+                    col_index = aliens[row_index].length-1;
+                    // move aliens down
+                    if (alien_move_down) {
+                        alien_move_down = false;
+                        alien_direction *= -1;
+                        row_index = aliens.length-1;
+                    } else {
+                        checkEdges();
+                    }
+                }
+                col_index = aliens[row_index].length-1;
+            }
         }
         
     }
