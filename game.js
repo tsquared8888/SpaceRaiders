@@ -10,6 +10,7 @@ const TURRET_SPEED = 20;
 const ALIEN_WIDTH = 16;
 const ALIEN_HEIGHT = 16;
 const ALIEN_SPACING = 8;
+const ALIEN_SPEED = 16;//4;
 const ALIEN_ROWS = 8;
 const ALIEN_COLS = 5;
 const LASER_WIDTH = 2;
@@ -22,7 +23,13 @@ var score = 0;
 var turretCollided = false;
 var lasers = [];
 var aliens = [];
+var alien_direction = 1;
+var alien_move_down = false;
+var row_index = ALIEN_ROWS-1;
+var col_index = ALIEN_COLS-1;
 var shotReady = true;
+var timer = 0.0;
+var timerMax = 0.5;
 
 /* Game objects */
 var turret = {
@@ -109,7 +116,6 @@ function fire(group) {
     if (group == "turret") {
         let laser_obj = new laser(turret.x + TURRET_WIDTH/2, turret.y, LASER_WIDTH, LASER_HEIGHT, -LASER_SPEED, group);
         lasers.push(laser_obj);
-        console.log(lasers[0]);
     }
 }
 
@@ -123,6 +129,62 @@ function moveLasers(deltaTime) {
             lasers.splice(i, 1);
         } else {
             i++;
+        }
+    }
+}
+
+function moveAliens(deltaTime) {
+    timer += deltaTime;
+    while (timer > timerMax) {
+        // Moves only visible aliens
+        if (aliens[row_index][col_index] != 0) {
+            timer = 0;
+        }
+
+        if (alien_move_down) {
+            aliens[row_index][col_index].y += ALIEN_HEIGHT + ALIEN_SPACING;
+        } else {
+            aliens[row_index][col_index].x += alien_direction * ALIEN_SPEED;
+        }
+
+        // Index handling
+        col_index -= 1;
+        if (col_index == -1) {
+            row_index -= 1;
+            if (row_index == -1) {
+                row_index = aliens.length-1;
+                col_index = aliens[row_index].length-1;
+                // move aliens down
+                if (alien_move_down) {
+                    alien_move_down = false;
+                    alien_direction *= -1;
+                } else {
+                    checkEdges();
+                }
+            }
+            col_index = aliens[row_index].length-1;
+        }
+        
+    }
+}
+
+function checkEdges() {
+    // If aliens are moving right, we move from right to left to find right edge
+    if (alien_direction == 1) {
+        for (let i = ALIEN_ROWS-1; i > 0; i--) {
+            for (let j = ALIEN_COLS-1; j > 0; j--) {
+                if (aliens[i][j] != 0 && aliens[i][j].x >= GAME_WIDTH - ALIEN_SPACING - 2 * ALIEN_WIDTH) {
+                    alien_move_down = true;
+                }
+            }
+        }
+    } else if (alien_direction == -1) { // Else we move left to right to find left edge
+        for (let i = ALIEN_ROWS-1; i > 0; i--) {
+            for (let j = ALIEN_COLS-1; j > 0; j--) {
+                if (aliens[i][j] != 0 && aliens[row_index][col_index].x <= ALIEN_SPACING + 8 * ALIEN_WIDTH) {
+                    alien_move_down = true;
+                }
+            }
         }
     }
 }
@@ -151,6 +213,7 @@ function checkCollisions() {
                     aliens[i][j] = 0;
                     lasers.splice(k, 1);
                     collided = true;
+                    timerMax -= 0.01;
                 }
             }
         }
@@ -203,6 +266,7 @@ function input() {
 function update(deltaTime) {
     moveTurret(deltaTime);
     moveLasers(deltaTime);
+    moveAliens(deltaTime);
     checkCollisions();
 }
 
