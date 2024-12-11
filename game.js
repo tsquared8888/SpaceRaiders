@@ -1,7 +1,9 @@
 var canvas = document.getElementById('c');
 var ctx = canvas.getContext('2d');
 const TURRET_SPRITE = new Image();
+const ALIEN_SPRITE = new Image();
 TURRET_SPRITE.src = 'turret.png';
+ALIEN_SPRITE.src = 'alien.png';
 const GAME_WIDTH = 256;
 const GAME_HEIGHT = 256;
 const TURRET_WIDTH = 16;
@@ -55,6 +57,7 @@ function laser(x, y, w, h, y_vel, group) {
 }
 
 function alien(x, y, w, h) {
+    this.sprite = ALIEN_SPRITE;
     this.x = x;
     this.y = y;
     this.w = w;
@@ -76,9 +79,11 @@ for (let i = 0; i < ALIEN_ROWS; i++) {
 /************* SUPPORT FUNCTIONS *************/
 
 function resetGame() {
+    timerMax = 0.5
     gameOver = false;
     alien_move_down = false;
     alien_direction = 1;
+    lasers = [];
     document.getElementById('game-over-text').innerHTML = '';
     turret.x = GAME_WIDTH/2 - TURRET_WIDTH/2;
     turret.y = GAME_HEIGHT - TURRET_HEIGHT;
@@ -330,7 +335,9 @@ function draw() {
     for (let i = 0; i < aliens.length; i++) {
         for (let j = 0; j < aliens[i].length; j++) {
             let alien = aliens[i][j];
-            ctx.fillRect(alien.x, alien.y, alien.w, alien.h);
+            if (alien != 0) {
+                ctx.drawImage(alien.sprite, alien.x, alien.y);
+            }
         }
     }
 
