@@ -21,6 +21,7 @@ const LASER_SPEED = 15;
 var gameStart = false;
 var lastTime = 0;
 var gameOver = false;
+var gameWon = false;
 var score = 0;
 var turretCollided = false;
 var lasers = [];
@@ -81,6 +82,7 @@ for (let i = 0; i < ALIEN_ROWS; i++) {
 function resetGame() {
     timerMax = 0.5
     gameOver = false;
+    gameWon = false;
     alien_move_down = false;
     alien_direction = 1;
     lasers = [];
@@ -212,9 +214,9 @@ function moveAliens(deltaTime) {
 }
 
 function checkEdges() {
-    // Check if the first lowest row of aliens is greater than the maximum height and end the game if true
-    for (let i = ALIEN_ROWS-1; i > 0; i--) {
-        for (let j = ALIEN_COLS-1; j > 0; j--) {
+    // Check if any aliens are greater than the maximum height and end the game if true
+    for (let i = ALIEN_ROWS-1; i >= 0; i--) {
+        for (let j = ALIEN_COLS-1; j >= 0; j--) {
             if (aliens[i][j] != 0 && aliens[i][j].y >= GAME_HEIGHT - ALIEN_SPACING - 2 * ALIEN_HEIGHT) {
                 gameOver = true;
                 return;
@@ -223,17 +225,17 @@ function checkEdges() {
     }
     // If aliens are moving right, we move from right to left to find right edge
     if (alien_direction == 1) {
-        for (let i = ALIEN_ROWS-1; i > 0; i--) {
-            for (let j = ALIEN_COLS-1; j > 0; j--) {
-                if (aliens[i][j] != 0 && aliens[i][j].x >= GAME_WIDTH - ALIEN_SPACING - 2 * ALIEN_WIDTH) {
+        for (let i = ALIEN_ROWS-1; i >= 0; i--) {
+            for (let j = ALIEN_COLS-1; j >= 0; j--) {
+                if (aliens[i][j] != 0 && aliens[i][j].x >= GAME_WIDTH - 2 * ALIEN_WIDTH) {
                     alien_move_down = true;
                 }
             }
         }
     } else if (alien_direction == -1) { // Else we move left to right to find left edge
-        for (let i = ALIEN_ROWS-1; i > 0; i--) {
-            for (let j = ALIEN_COLS-1; j > 0; j--) {
-                if (aliens[i][j] != 0 && aliens[i][j].x <= ALIEN_SPACING + 2 * ALIEN_WIDTH) {
+        for (let i = ALIEN_ROWS-1; i >= 0; i--) {
+            for (let j = ALIEN_COLS-1; j >= 0; j--) {
+                if (aliens[i][j] != 0 && aliens[i][j].x <= ALIEN_WIDTH) {
                     alien_move_down = true;
                 }
             }
@@ -281,7 +283,7 @@ function checkCollisions() {
 
 function input() {
     document.addEventListener("keydown", (event)=> {
-        if (!gameOver) {
+        if (!gameOver && !gameWon) {
             if (event.key == 'ArrowRight') {
                 turret.movR = TURRET_SPEED;
             }
@@ -320,6 +322,14 @@ function update(deltaTime) {
     moveLasers(deltaTime);
     moveAliens(deltaTime);
     checkCollisions();
+    for (let i = 0; i < ALIEN_ROWS; i++) {
+        for (let j = 0; j < ALIEN_COLS; j++) {
+            if (aliens[i][j] != 0) {
+                return;
+            }
+        }
+    }
+    gameWon = true;
 }
 
 function draw() {
@@ -344,13 +354,16 @@ function draw() {
     if (gameOver) {
         document.getElementById('game-over-text').innerHTML = 'GAME OVER<br><br>Press Enter <br>To Restart';
     }
+    else if (gameWon) {
+        document.getElementById('game-over-text').innerHTML = 'YOU WIN!<br><br>Press Enter <br>To Play Again';
+    }
 }
 
 function gameLoop(timestamp) {
     var deltaTime = (timestamp - lastTime)/100; 
     lastTime = timestamp;
     input();
-    if (!gameOver) {
+    if (!gameOver && !gameWon) {
         update(deltaTime);
     }
     draw(deltaTime);
